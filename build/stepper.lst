@@ -1,0 +1,836 @@
+ARM GAS  /tmp/ccANCvGS.s 			page 1
+
+
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"stepper.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.get_pos,"ax",%progbits
+  18              		.align	1
+  19              		.global	get_pos
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	get_pos:
+  25              	.LFB65:
+  26              		.file 1 "Core/Src/stepper.c"
+   1:Core/Src/stepper.c **** #include "stepper.h"
+   2:Core/Src/stepper.c **** 
+   3:Core/Src/stepper.c **** extern TIM_HandleTypeDef htim1;
+   4:Core/Src/stepper.c **** 
+   5:Core/Src/stepper.c **** volatile uint32_t speed = 0;
+   6:Core/Src/stepper.c **** volatile int32_t position = 0;
+   7:Core/Src/stepper.c **** volatile uint32_t last_update_tick;
+   8:Core/Src/stepper.c **** int32_t pos_target = 0;
+   9:Core/Src/stepper.c **** uint8_t moving = 0;
+  10:Core/Src/stepper.c **** 
+  11:Core/Src/stepper.c **** enum DIRECTION {
+  12:Core/Src/stepper.c ****     FWD,
+  13:Core/Src/stepper.c ****     REV
+  14:Core/Src/stepper.c **** } direction = FWD;
+  15:Core/Src/stepper.c **** 
+  16:Core/Src/stepper.c **** int32_t get_pos(void){
+  27              		.loc 1 16 22 view -0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  17:Core/Src/stepper.c ****     return position;
+  32              		.loc 1 17 5 view .LVU1
+  33              		.loc 1 17 12 is_stmt 0 view .LVU2
+  34 0000 014B     		ldr	r3, .L2
+  35 0002 1868     		ldr	r0, [r3]
+  18:Core/Src/stepper.c **** }
+  36              		.loc 1 18 1 view .LVU3
+  37 0004 7047     		bx	lr
+  38              	.L3:
+  39 0006 00BF     		.align	2
+  40              	.L2:
+ARM GAS  /tmp/ccANCvGS.s 			page 2
+
+
+  41 0008 00000000 		.word	.LANCHOR0
+  42              		.cfi_endproc
+  43              	.LFE65:
+  45              		.section	.text.stop_movement,"ax",%progbits
+  46              		.align	1
+  47              		.global	stop_movement
+  48              		.syntax unified
+  49              		.thumb
+  50              		.thumb_func
+  52              	stop_movement:
+  53              	.LFB66:
+  19:Core/Src/stepper.c **** 
+  20:Core/Src/stepper.c **** void stop_movement(void) {
+  54              		.loc 1 20 26 is_stmt 1 view -0
+  55              		.cfi_startproc
+  56              		@ args = 0, pretend = 0, frame = 0
+  57              		@ frame_needed = 0, uses_anonymous_args = 0
+  58 0000 08B5     		push	{r3, lr}
+  59              		.cfi_def_cfa_offset 8
+  60              		.cfi_offset 3, -8
+  61              		.cfi_offset 14, -4
+  21:Core/Src/stepper.c ****     HAL_TIM_PWM_Stop_IT(&htim1, TIM_CHANNEL_2);
+  62              		.loc 1 21 5 view .LVU5
+  63 0002 0421     		movs	r1, #4
+  64 0004 0348     		ldr	r0, .L6
+  65 0006 FFF7FEFF 		bl	HAL_TIM_PWM_Stop_IT
+  66              	.LVL0:
+  22:Core/Src/stepper.c ****     moving = 0;
+  67              		.loc 1 22 5 view .LVU6
+  68              		.loc 1 22 12 is_stmt 0 view .LVU7
+  69 000a 034B     		ldr	r3, .L6+4
+  70 000c 0022     		movs	r2, #0
+  71 000e 1A70     		strb	r2, [r3]
+  23:Core/Src/stepper.c **** }
+  72              		.loc 1 23 1 view .LVU8
+  73 0010 08BD     		pop	{r3, pc}
+  74              	.L7:
+  75 0012 00BF     		.align	2
+  76              	.L6:
+  77 0014 00000000 		.word	htim1
+  78 0018 00000000 		.word	.LANCHOR1
+  79              		.cfi_endproc
+  80              	.LFE66:
+  82              		.section	.text.set_arr,"ax",%progbits
+  83              		.align	1
+  84              		.global	set_arr
+  85              		.syntax unified
+  86              		.thumb
+  87              		.thumb_func
+  89              	set_arr:
+  90              	.LFB67:
+  24:Core/Src/stepper.c **** 
+  25:Core/Src/stepper.c **** void set_arr(void) {
+  91              		.loc 1 25 20 is_stmt 1 view -0
+  92              		.cfi_startproc
+  93              		@ args = 0, pretend = 0, frame = 0
+  94              		@ frame_needed = 0, uses_anonymous_args = 0
+ARM GAS  /tmp/ccANCvGS.s 			page 3
+
+
+  95              		@ link register save eliminated.
+  26:Core/Src/stepper.c ****     uint32_t autoreload = 65535 / speed;
+  96              		.loc 1 26 5 view .LVU10
+  97              		.loc 1 26 33 is_stmt 0 view .LVU11
+  98 0000 054B     		ldr	r3, .L9
+  99 0002 1868     		ldr	r0, [r3]
+ 100              	.LVL1:
+  27:Core/Src/stepper.c ****     __HAL_TIM_SET_AUTORELOAD(&htim1, (uint16_t) autoreload);
+ 101              		.loc 1 27 5 is_stmt 1 view .LVU12
+ 102              		.loc 1 27 5 view .LVU13
+ 103 0004 054A     		ldr	r2, .L9+4
+ 104 0006 1168     		ldr	r1, [r2]
+ 105 0008 4FF6FF73 		movw	r3, #65535
+ 106 000c B3FBF0F3 		udiv	r3, r3, r0
+ 107              	.LVL2:
+ 108              		.loc 1 27 5 is_stmt 0 view .LVU14
+ 109 0010 CB62     		str	r3, [r1, #44]
+ 110              		.loc 1 27 5 is_stmt 1 view .LVU15
+ 111 0012 D360     		str	r3, [r2, #12]
+ 112              		.loc 1 27 5 view .LVU16
+  28:Core/Src/stepper.c **** }
+ 113              		.loc 1 28 1 is_stmt 0 view .LVU17
+ 114 0014 7047     		bx	lr
+ 115              	.L10:
+ 116 0016 00BF     		.align	2
+ 117              	.L9:
+ 118 0018 00000000 		.word	.LANCHOR2
+ 119 001c 00000000 		.word	htim1
+ 120              		.cfi_endproc
+ 121              	.LFE67:
+ 123              		.section	.text.start_movement,"ax",%progbits
+ 124              		.align	1
+ 125              		.global	start_movement
+ 126              		.syntax unified
+ 127              		.thumb
+ 128              		.thumb_func
+ 130              	start_movement:
+ 131              	.LFB68:
+  29:Core/Src/stepper.c **** 
+  30:Core/Src/stepper.c **** void start_movement(void) {
+ 132              		.loc 1 30 27 is_stmt 1 view -0
+ 133              		.cfi_startproc
+ 134              		@ args = 0, pretend = 0, frame = 0
+ 135              		@ frame_needed = 0, uses_anonymous_args = 0
+ 136 0000 10B5     		push	{r4, lr}
+ 137              		.cfi_def_cfa_offset 8
+ 138              		.cfi_offset 4, -8
+ 139              		.cfi_offset 14, -4
+  31:Core/Src/stepper.c ****     speed = MIN_SPEED;
+ 140              		.loc 1 31 5 view .LVU19
+ 141              		.loc 1 31 11 is_stmt 0 view .LVU20
+ 142 0002 114B     		ldr	r3, .L15
+ 143 0004 3222     		movs	r2, #50
+ 144 0006 1A60     		str	r2, [r3]
+  32:Core/Src/stepper.c ****     if(direction == FWD){
+ 145              		.loc 1 32 5 is_stmt 1 view .LVU21
+ 146              		.loc 1 32 18 is_stmt 0 view .LVU22
+ARM GAS  /tmp/ccANCvGS.s 			page 4
+
+
+ 147 0008 104B     		ldr	r3, .L15+4
+ 148 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 149              		.loc 1 32 7 view .LVU23
+ 150 000c A3B9     		cbnz	r3, .L12
+  33:Core/Src/stepper.c ****         HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 1);
+ 151              		.loc 1 33 9 is_stmt 1 view .LVU24
+ 152 000e 0122     		movs	r2, #1
+ 153 0010 4FF48061 		mov	r1, #1024
+ 154 0014 0E48     		ldr	r0, .L15+8
+ 155 0016 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 156              	.LVL3:
+ 157              	.L13:
+  34:Core/Src/stepper.c ****     } else {
+  35:Core/Src/stepper.c ****         HAL_GPIO_WritePin(DIR_GPIO_Port, DIR_Pin, 0);
+  36:Core/Src/stepper.c ****     }
+  37:Core/Src/stepper.c ****     set_arr();
+ 158              		.loc 1 37 5 view .LVU25
+ 159 001a FFF7FEFF 		bl	set_arr
+ 160              	.LVL4:
+  38:Core/Src/stepper.c ****     __HAL_TIM_SET_COUNTER(&htim1, 0);
+ 161              		.loc 1 38 5 view .LVU26
+ 162 001e 0D4C     		ldr	r4, .L15+12
+ 163 0020 2368     		ldr	r3, [r4]
+ 164 0022 0022     		movs	r2, #0
+ 165 0024 5A62     		str	r2, [r3, #36]
+  39:Core/Src/stepper.c ****     last_update_tick = HAL_GetTick();
+ 166              		.loc 1 39 5 view .LVU27
+ 167              		.loc 1 39 24 is_stmt 0 view .LVU28
+ 168 0026 FFF7FEFF 		bl	HAL_GetTick
+ 169              	.LVL5:
+ 170              		.loc 1 39 22 view .LVU29
+ 171 002a 0B4B     		ldr	r3, .L15+16
+ 172 002c 1860     		str	r0, [r3]
+  40:Core/Src/stepper.c ****     HAL_TIM_PWM_Start_IT(&htim1, TIM_CHANNEL_2);
+ 173              		.loc 1 40 5 is_stmt 1 view .LVU30
+ 174 002e 0421     		movs	r1, #4
+ 175 0030 2046     		mov	r0, r4
+ 176 0032 FFF7FEFF 		bl	HAL_TIM_PWM_Start_IT
+ 177              	.LVL6:
+  41:Core/Src/stepper.c **** }
+ 178              		.loc 1 41 1 is_stmt 0 view .LVU31
+ 179 0036 10BD     		pop	{r4, pc}
+ 180              	.L12:
+  35:Core/Src/stepper.c ****     }
+ 181              		.loc 1 35 9 is_stmt 1 view .LVU32
+ 182 0038 0022     		movs	r2, #0
+ 183 003a 4FF48061 		mov	r1, #1024
+ 184 003e 0448     		ldr	r0, .L15+8
+ 185 0040 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 186              	.LVL7:
+ 187 0044 E9E7     		b	.L13
+ 188              	.L16:
+ 189 0046 00BF     		.align	2
+ 190              	.L15:
+ 191 0048 00000000 		.word	.LANCHOR2
+ 192 004c 00000000 		.word	.LANCHOR3
+ 193 0050 00080140 		.word	1073809408
+ARM GAS  /tmp/ccANCvGS.s 			page 5
+
+
+ 194 0054 00000000 		.word	htim1
+ 195 0058 00000000 		.word	.LANCHOR4
+ 196              		.cfi_endproc
+ 197              	.LFE68:
+ 199              		.section	.text.stepper_pulse_finished,"ax",%progbits
+ 200              		.align	1
+ 201              		.global	stepper_pulse_finished
+ 202              		.syntax unified
+ 203              		.thumb
+ 204              		.thumb_func
+ 206              	stepper_pulse_finished:
+ 207              	.LFB69:
+  42:Core/Src/stepper.c **** 
+  43:Core/Src/stepper.c **** void stepper_pulse_finished(void) {
+ 208              		.loc 1 43 35 view -0
+ 209              		.cfi_startproc
+ 210              		@ args = 0, pretend = 0, frame = 0
+ 211              		@ frame_needed = 0, uses_anonymous_args = 0
+ 212 0000 10B5     		push	{r4, lr}
+ 213              		.cfi_def_cfa_offset 8
+ 214              		.cfi_offset 4, -8
+ 215              		.cfi_offset 14, -4
+  44:Core/Src/stepper.c ****     uint32_t distance_remaining;
+ 216              		.loc 1 44 5 view .LVU34
+  45:Core/Src/stepper.c ****     uint32_t time = HAL_GetTick();
+ 217              		.loc 1 45 5 view .LVU35
+ 218              		.loc 1 45 21 is_stmt 0 view .LVU36
+ 219 0002 FFF7FEFF 		bl	HAL_GetTick
+ 220              	.LVL8:
+ 221 0006 0446     		mov	r4, r0
+ 222              	.LVL9:
+  46:Core/Src/stepper.c ****     // todo
+  47:Core/Src/stepper.c ****     if(direction == FWD) {
+ 223              		.loc 1 47 5 is_stmt 1 view .LVU37
+ 224              		.loc 1 47 18 is_stmt 0 view .LVU38
+ 225 0008 274B     		ldr	r3, .L29
+ 226 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 227              		.loc 1 47 7 view .LVU39
+ 228 000c 002B     		cmp	r3, #0
+ 229 000e 37D1     		bne	.L18
+  48:Core/Src/stepper.c ****         position++;
+ 230              		.loc 1 48 9 is_stmt 1 view .LVU40
+ 231              		.loc 1 48 17 is_stmt 0 view .LVU41
+ 232 0010 264B     		ldr	r3, .L29+4
+ 233 0012 1A68     		ldr	r2, [r3]
+ 234 0014 0132     		adds	r2, r2, #1
+ 235 0016 1A60     		str	r2, [r3]
+  49:Core/Src/stepper.c ****         if(position >= pos_target) {
+ 236              		.loc 1 49 9 is_stmt 1 view .LVU42
+ 237              		.loc 1 49 21 is_stmt 0 view .LVU43
+ 238 0018 1A68     		ldr	r2, [r3]
+ 239 001a 254B     		ldr	r3, .L29+8
+ 240 001c 1B68     		ldr	r3, [r3]
+ 241              		.loc 1 49 11 view .LVU44
+ 242 001e 9A42     		cmp	r2, r3
+ 243 0020 2BDA     		bge	.L27
+  50:Core/Src/stepper.c ****             stop_movement();
+ARM GAS  /tmp/ccANCvGS.s 			page 6
+
+
+  51:Core/Src/stepper.c ****             return;
+  52:Core/Src/stepper.c ****         }
+  53:Core/Src/stepper.c ****         distance_remaining = pos_target - position;
+ 244              		.loc 1 53 9 is_stmt 1 view .LVU45
+ 245              		.loc 1 53 41 is_stmt 0 view .LVU46
+ 246 0022 224A     		ldr	r2, .L29+4
+ 247 0024 1268     		ldr	r2, [r2]
+ 248 0026 9A1A     		subs	r2, r3, r2
+ 249              	.LVL10:
+ 250              	.L21:
+  54:Core/Src/stepper.c ****     } else {
+  55:Core/Src/stepper.c ****         position--;
+  56:Core/Src/stepper.c **** 
+  57:Core/Src/stepper.c ****         if(position <= pos_target) {
+  58:Core/Src/stepper.c ****             stop_movement();
+  59:Core/Src/stepper.c ****             moving = 0;
+  60:Core/Src/stepper.c ****             return;
+  61:Core/Src/stepper.c ****         }
+  62:Core/Src/stepper.c ****         distance_remaining = position - pos_target;
+  63:Core/Src/stepper.c ****     }
+  64:Core/Src/stepper.c **** 
+  65:Core/Src/stepper.c ****     uint32_t dt = time - last_update_tick;
+ 251              		.loc 1 65 5 is_stmt 1 view .LVU47
+ 252              		.loc 1 65 24 is_stmt 0 view .LVU48
+ 253 0028 224B     		ldr	r3, .L29+12
+ 254 002a 1B68     		ldr	r3, [r3]
+ 255              		.loc 1 65 14 view .LVU49
+ 256 002c E31A     		subs	r3, r4, r3
+ 257              	.LVL11:
+  66:Core/Src/stepper.c ****     speed += dt * ACCEL;
+ 258              		.loc 1 66 5 is_stmt 1 view .LVU50
+ 259              		.loc 1 66 17 is_stmt 0 view .LVU51
+ 260 002e C3EBC303 		rsb	r3, r3, r3, lsl #3
+ 261              	.LVL12:
+ 262              		.loc 1 66 11 view .LVU52
+ 263 0032 2149     		ldr	r1, .L29+16
+ 264 0034 0868     		ldr	r0, [r1]
+ 265              	.LVL13:
+ 266              		.loc 1 66 11 view .LVU53
+ 267 0036 0344     		add	r3, r3, r0
+ 268 0038 0B60     		str	r3, [r1]
+  67:Core/Src/stepper.c **** 
+  68:Core/Src/stepper.c ****     if(speed > MAX_SPEED) {
+ 269              		.loc 1 68 5 is_stmt 1 view .LVU54
+ 270              		.loc 1 68 14 is_stmt 0 view .LVU55
+ 271 003a 0B68     		ldr	r3, [r1]
+ 272              		.loc 1 68 7 view .LVU56
+ 273 003c B3F5FA6F 		cmp	r3, #2000
+ 274 0040 03D9     		bls	.L23
+  69:Core/Src/stepper.c ****         speed = MAX_SPEED;
+ 275              		.loc 1 69 9 is_stmt 1 view .LVU57
+ 276              		.loc 1 69 15 is_stmt 0 view .LVU58
+ 277 0042 0B46     		mov	r3, r1
+ 278 0044 4FF4FA61 		mov	r1, #2000
+ 279 0048 1960     		str	r1, [r3]
+ 280              	.L23:
+  70:Core/Src/stepper.c ****     }
+ARM GAS  /tmp/ccANCvGS.s 			page 7
+
+
+  71:Core/Src/stepper.c ****     uint32_t decel_speed = (distance_remaining * DECEL) >> 8;
+ 281              		.loc 1 71 5 is_stmt 1 view .LVU59
+ 282              		.loc 1 71 48 is_stmt 0 view .LVU60
+ 283 004a 4FF4C873 		mov	r3, #400
+ 284 004e 02FB03F3 		mul	r3, r2, r3
+ 285              		.loc 1 71 14 view .LVU61
+ 286 0052 190A     		lsrs	r1, r3, #8
+ 287              	.LVL14:
+  72:Core/Src/stepper.c ****     if(speed > decel_speed) {
+ 288              		.loc 1 72 5 is_stmt 1 view .LVU62
+ 289              		.loc 1 72 14 is_stmt 0 view .LVU63
+ 290 0054 184A     		ldr	r2, .L29+16
+ 291              	.LVL15:
+ 292              		.loc 1 72 14 view .LVU64
+ 293 0056 1268     		ldr	r2, [r2]
+ 294              		.loc 1 72 7 view .LVU65
+ 295 0058 B2EB132F 		cmp	r2, r3, lsr #8
+ 296 005c 01D9     		bls	.L24
+  73:Core/Src/stepper.c ****         speed = decel_speed;
+ 297              		.loc 1 73 9 is_stmt 1 view .LVU66
+ 298              		.loc 1 73 15 is_stmt 0 view .LVU67
+ 299 005e 164B     		ldr	r3, .L29+16
+ 300 0060 1960     		str	r1, [r3]
+ 301              	.L24:
+  74:Core/Src/stepper.c ****     }
+  75:Core/Src/stepper.c ****     if(speed < MIN_SPEED) {
+ 302              		.loc 1 75 5 is_stmt 1 view .LVU68
+ 303              		.loc 1 75 14 is_stmt 0 view .LVU69
+ 304 0062 154B     		ldr	r3, .L29+16
+ 305 0064 1B68     		ldr	r3, [r3]
+ 306              		.loc 1 75 7 view .LVU70
+ 307 0066 312B     		cmp	r3, #49
+ 308 0068 02D8     		bhi	.L25
+  76:Core/Src/stepper.c ****         speed = MIN_SPEED;
+ 309              		.loc 1 76 9 is_stmt 1 view .LVU71
+ 310              		.loc 1 76 15 is_stmt 0 view .LVU72
+ 311 006a 134B     		ldr	r3, .L29+16
+ 312 006c 3222     		movs	r2, #50
+ 313 006e 1A60     		str	r2, [r3]
+ 314              	.L25:
+  77:Core/Src/stepper.c ****     }
+  78:Core/Src/stepper.c ****     set_arr();
+ 315              		.loc 1 78 5 is_stmt 1 view .LVU73
+ 316 0070 FFF7FEFF 		bl	set_arr
+ 317              	.LVL16:
+  79:Core/Src/stepper.c ****     last_update_tick = time;
+ 318              		.loc 1 79 5 view .LVU74
+ 319              		.loc 1 79 22 is_stmt 0 view .LVU75
+ 320 0074 0F4B     		ldr	r3, .L29+12
+ 321 0076 1C60     		str	r4, [r3]
+ 322              	.L17:
+  80:Core/Src/stepper.c **** }
+ 323              		.loc 1 80 1 view .LVU76
+ 324 0078 10BD     		pop	{r4, pc}
+ 325              	.LVL17:
+ 326              	.L27:
+  50:Core/Src/stepper.c ****             return;
+ARM GAS  /tmp/ccANCvGS.s 			page 8
+
+
+ 327              		.loc 1 50 13 is_stmt 1 view .LVU77
+ 328 007a FFF7FEFF 		bl	stop_movement
+ 329              	.LVL18:
+  51:Core/Src/stepper.c ****         }
+ 330              		.loc 1 51 13 view .LVU78
+ 331 007e FBE7     		b	.L17
+ 332              	.LVL19:
+ 333              	.L18:
+  55:Core/Src/stepper.c **** 
+ 334              		.loc 1 55 9 view .LVU79
+  55:Core/Src/stepper.c **** 
+ 335              		.loc 1 55 17 is_stmt 0 view .LVU80
+ 336 0080 0A4B     		ldr	r3, .L29+4
+ 337 0082 1A68     		ldr	r2, [r3]
+ 338 0084 013A     		subs	r2, r2, #1
+ 339 0086 1A60     		str	r2, [r3]
+  57:Core/Src/stepper.c ****             stop_movement();
+ 340              		.loc 1 57 9 is_stmt 1 view .LVU81
+  57:Core/Src/stepper.c ****             stop_movement();
+ 341              		.loc 1 57 21 is_stmt 0 view .LVU82
+ 342 0088 1B68     		ldr	r3, [r3]
+ 343 008a 094A     		ldr	r2, .L29+8
+ 344 008c 1268     		ldr	r2, [r2]
+  57:Core/Src/stepper.c ****             stop_movement();
+ 345              		.loc 1 57 11 view .LVU83
+ 346 008e 9342     		cmp	r3, r2
+ 347 0090 03DD     		ble	.L28
+  62:Core/Src/stepper.c ****     }
+ 348              		.loc 1 62 9 is_stmt 1 view .LVU84
+  62:Core/Src/stepper.c ****     }
+ 349              		.loc 1 62 39 is_stmt 0 view .LVU85
+ 350 0092 064B     		ldr	r3, .L29+4
+ 351 0094 1B68     		ldr	r3, [r3]
+ 352 0096 9A1A     		subs	r2, r3, r2
+ 353              	.LVL20:
+  62:Core/Src/stepper.c ****     }
+ 354              		.loc 1 62 39 view .LVU86
+ 355 0098 C6E7     		b	.L21
+ 356              	.LVL21:
+ 357              	.L28:
+  58:Core/Src/stepper.c ****             moving = 0;
+ 358              		.loc 1 58 13 is_stmt 1 view .LVU87
+ 359 009a FFF7FEFF 		bl	stop_movement
+ 360              	.LVL22:
+  59:Core/Src/stepper.c ****             return;
+ 361              		.loc 1 59 13 view .LVU88
+  59:Core/Src/stepper.c ****             return;
+ 362              		.loc 1 59 20 is_stmt 0 view .LVU89
+ 363 009e 074B     		ldr	r3, .L29+20
+ 364 00a0 0022     		movs	r2, #0
+ 365 00a2 1A70     		strb	r2, [r3]
+  60:Core/Src/stepper.c ****         }
+ 366              		.loc 1 60 13 is_stmt 1 view .LVU90
+ 367 00a4 E8E7     		b	.L17
+ 368              	.L30:
+ 369 00a6 00BF     		.align	2
+ 370              	.L29:
+ARM GAS  /tmp/ccANCvGS.s 			page 9
+
+
+ 371 00a8 00000000 		.word	.LANCHOR3
+ 372 00ac 00000000 		.word	.LANCHOR0
+ 373 00b0 00000000 		.word	.LANCHOR5
+ 374 00b4 00000000 		.word	.LANCHOR4
+ 375 00b8 00000000 		.word	.LANCHOR2
+ 376 00bc 00000000 		.word	.LANCHOR1
+ 377              		.cfi_endproc
+ 378              	.LFE69:
+ 380              		.section	.text.move_to,"ax",%progbits
+ 381              		.align	1
+ 382              		.global	move_to
+ 383              		.syntax unified
+ 384              		.thumb
+ 385              		.thumb_func
+ 387              	move_to:
+ 388              	.LVL23:
+ 389              	.LFB70:
+  81:Core/Src/stepper.c **** 
+  82:Core/Src/stepper.c **** 
+  83:Core/Src/stepper.c **** void move_to(int32_t target){
+ 390              		.loc 1 83 29 view -0
+ 391              		.cfi_startproc
+ 392              		@ args = 0, pretend = 0, frame = 0
+ 393              		@ frame_needed = 0, uses_anonymous_args = 0
+ 394              		.loc 1 83 29 is_stmt 0 view .LVU92
+ 395 0000 08B5     		push	{r3, lr}
+ 396              		.cfi_def_cfa_offset 8
+ 397              		.cfi_offset 3, -8
+ 398              		.cfi_offset 14, -4
+  84:Core/Src/stepper.c ****     if(moving) {
+ 399              		.loc 1 84 5 is_stmt 1 view .LVU93
+ 400              		.loc 1 84 8 is_stmt 0 view .LVU94
+ 401 0002 1B4A     		ldr	r2, .L41
+ 402 0004 1278     		ldrb	r2, [r2]	@ zero_extendqisi2
+ 403              		.loc 1 84 7 view .LVU95
+ 404 0006 C2B1     		cbz	r2, .L32
+ 405 0008 0023     		movs	r3, #0
+ 406              	.LBB2:
+  85:Core/Src/stepper.c ****         enum DIRECTION new_dir;
+ 407              		.loc 1 85 9 is_stmt 1 view .LVU96
+  86:Core/Src/stepper.c ****         if(pos_target > position){
+ 408              		.loc 1 86 9 view .LVU97
+ 409              		.loc 1 86 23 is_stmt 0 view .LVU98
+ 410 000a 1A4A     		ldr	r2, .L41+4
+ 411 000c 1268     		ldr	r2, [r2]
+ 412 000e 1A49     		ldr	r1, .L41+8
+ 413 0010 0968     		ldr	r1, [r1]
+ 414              		.loc 1 86 11 view .LVU99
+ 415 0012 8A42     		cmp	r2, r1
+ 416 0014 05DC     		bgt	.L38
+  87:Core/Src/stepper.c ****             new_dir = FWD;
+  88:Core/Src/stepper.c ****         } else if(pos_target < position){
+ 417              		.loc 1 88 16 is_stmt 1 view .LVU100
+ 418              		.loc 1 88 30 is_stmt 0 view .LVU101
+ 419 0016 1849     		ldr	r1, .L41+8
+ 420 0018 0968     		ldr	r1, [r1]
+ 421              		.loc 1 88 18 view .LVU102
+ARM GAS  /tmp/ccANCvGS.s 			page 10
+
+
+ 422 001a 8A42     		cmp	r2, r1
+ 423 001c 02DA     		bge	.L33
+  89:Core/Src/stepper.c ****             new_dir = REV;
+ 424              		.loc 1 89 21 view .LVU103
+ 425 001e 0123     		movs	r3, #1
+ 426 0020 00E0     		b	.L33
+ 427              	.L38:
+  87:Core/Src/stepper.c ****             new_dir = FWD;
+ 428              		.loc 1 87 21 view .LVU104
+ 429 0022 0023     		movs	r3, #0
+ 430              	.L33:
+ 431              	.LVL24:
+  90:Core/Src/stepper.c ****         }
+  91:Core/Src/stepper.c **** 
+  92:Core/Src/stepper.c ****         pos_target = target;
+ 432              		.loc 1 92 9 is_stmt 1 view .LVU105
+ 433              		.loc 1 92 20 is_stmt 0 view .LVU106
+ 434 0024 134A     		ldr	r2, .L41+4
+ 435 0026 1060     		str	r0, [r2]
+  93:Core/Src/stepper.c ****         if(new_dir == direction) {
+ 436              		.loc 1 93 9 is_stmt 1 view .LVU107
+ 437              		.loc 1 93 20 is_stmt 0 view .LVU108
+ 438 0028 144A     		ldr	r2, .L41+12
+ 439 002a 1278     		ldrb	r2, [r2]	@ zero_extendqisi2
+ 440              		.loc 1 93 11 view .LVU109
+ 441 002c 9A42     		cmp	r2, r3
+ 442 002e 12D0     		beq	.L31
+  94:Core/Src/stepper.c ****             return;
+  95:Core/Src/stepper.c ****         } else {
+  96:Core/Src/stepper.c ****             direction = new_dir;
+ 443              		.loc 1 96 13 is_stmt 1 view .LVU110
+ 444              		.loc 1 96 23 is_stmt 0 view .LVU111
+ 445 0030 124A     		ldr	r2, .L41+12
+ 446 0032 1370     		strb	r3, [r2]
+  97:Core/Src/stepper.c ****             start_movement();
+ 447              		.loc 1 97 13 is_stmt 1 view .LVU112
+ 448 0034 FFF7FEFF 		bl	start_movement
+ 449              	.LVL25:
+ 450              		.loc 1 97 13 is_stmt 0 view .LVU113
+ 451              	.LBE2:
+ 452 0038 0DE0     		b	.L31
+ 453              	.LVL26:
+ 454              	.L32:
+  98:Core/Src/stepper.c ****         }
+  99:Core/Src/stepper.c ****     } else {
+ 100:Core/Src/stepper.c ****         moving = 1;
+ 455              		.loc 1 100 9 is_stmt 1 view .LVU114
+ 456              		.loc 1 100 16 is_stmt 0 view .LVU115
+ 457 003a 0D4B     		ldr	r3, .L41
+ 458 003c 0122     		movs	r2, #1
+ 459 003e 1A70     		strb	r2, [r3]
+ 101:Core/Src/stepper.c ****         pos_target = target;
+ 460              		.loc 1 101 9 is_stmt 1 view .LVU116
+ 461              		.loc 1 101 20 is_stmt 0 view .LVU117
+ 462 0040 0C4B     		ldr	r3, .L41+4
+ 463 0042 1860     		str	r0, [r3]
+ 102:Core/Src/stepper.c ****         if(pos_target > position){
+ARM GAS  /tmp/ccANCvGS.s 			page 11
+
+
+ 464              		.loc 1 102 9 is_stmt 1 view .LVU118
+ 465              		.loc 1 102 23 is_stmt 0 view .LVU119
+ 466 0044 0C4B     		ldr	r3, .L41+8
+ 467 0046 1B68     		ldr	r3, [r3]
+ 468              		.loc 1 102 11 view .LVU120
+ 469 0048 8342     		cmp	r3, r0
+ 470 004a 05DA     		bge	.L35
+ 103:Core/Src/stepper.c ****             direction = FWD;
+ 471              		.loc 1 103 13 is_stmt 1 view .LVU121
+ 472              		.loc 1 103 23 is_stmt 0 view .LVU122
+ 473 004c 0B4B     		ldr	r3, .L41+12
+ 474 004e 0022     		movs	r2, #0
+ 475 0050 1A70     		strb	r2, [r3]
+ 476              	.L36:
+ 104:Core/Src/stepper.c ****         } else if(pos_target < position){
+ 105:Core/Src/stepper.c ****             direction = REV;
+ 106:Core/Src/stepper.c ****         } else {
+ 107:Core/Src/stepper.c ****             // already at target
+ 108:Core/Src/stepper.c ****             stop_movement();
+ 109:Core/Src/stepper.c ****             return;
+ 110:Core/Src/stepper.c ****         }
+ 111:Core/Src/stepper.c **** 
+ 112:Core/Src/stepper.c ****         start_movement();
+ 477              		.loc 1 112 9 is_stmt 1 view .LVU123
+ 478 0052 FFF7FEFF 		bl	start_movement
+ 479              	.LVL27:
+ 480              	.L31:
+ 113:Core/Src/stepper.c ****     }   
+ 114:Core/Src/stepper.c **** }
+ 481              		.loc 1 114 1 is_stmt 0 view .LVU124
+ 482 0056 08BD     		pop	{r3, pc}
+ 483              	.LVL28:
+ 484              	.L35:
+ 104:Core/Src/stepper.c ****         } else if(pos_target < position){
+ 485              		.loc 1 104 16 is_stmt 1 view .LVU125
+ 104:Core/Src/stepper.c ****         } else if(pos_target < position){
+ 486              		.loc 1 104 30 is_stmt 0 view .LVU126
+ 487 0058 074B     		ldr	r3, .L41+8
+ 488 005a 1B68     		ldr	r3, [r3]
+ 104:Core/Src/stepper.c ****         } else if(pos_target < position){
+ 489              		.loc 1 104 18 view .LVU127
+ 490 005c 8342     		cmp	r3, r0
+ 491 005e 03DD     		ble	.L37
+ 105:Core/Src/stepper.c ****         } else {
+ 492              		.loc 1 105 13 is_stmt 1 view .LVU128
+ 105:Core/Src/stepper.c ****         } else {
+ 493              		.loc 1 105 23 is_stmt 0 view .LVU129
+ 494 0060 064B     		ldr	r3, .L41+12
+ 495 0062 0122     		movs	r2, #1
+ 496 0064 1A70     		strb	r2, [r3]
+ 497 0066 F4E7     		b	.L36
+ 498              	.L37:
+ 108:Core/Src/stepper.c ****             return;
+ 499              		.loc 1 108 13 is_stmt 1 view .LVU130
+ 500 0068 FFF7FEFF 		bl	stop_movement
+ 501              	.LVL29:
+ 109:Core/Src/stepper.c ****         }
+ARM GAS  /tmp/ccANCvGS.s 			page 12
+
+
+ 502              		.loc 1 109 13 view .LVU131
+ 503 006c F3E7     		b	.L31
+ 504              	.L42:
+ 505 006e 00BF     		.align	2
+ 506              	.L41:
+ 507 0070 00000000 		.word	.LANCHOR1
+ 508 0074 00000000 		.word	.LANCHOR5
+ 509 0078 00000000 		.word	.LANCHOR0
+ 510 007c 00000000 		.word	.LANCHOR3
+ 511              		.cfi_endproc
+ 512              	.LFE70:
+ 514              		.section	.text.zero,"ax",%progbits
+ 515              		.align	1
+ 516              		.global	zero
+ 517              		.syntax unified
+ 518              		.thumb
+ 519              		.thumb_func
+ 521              	zero:
+ 522              	.LFB71:
+ 115:Core/Src/stepper.c **** 
+ 116:Core/Src/stepper.c **** void zero(void) {
+ 523              		.loc 1 116 17 view -0
+ 524              		.cfi_startproc
+ 525              		@ args = 0, pretend = 0, frame = 0
+ 526              		@ frame_needed = 0, uses_anonymous_args = 0
+ 527 0000 08B5     		push	{r3, lr}
+ 528              		.cfi_def_cfa_offset 8
+ 529              		.cfi_offset 3, -8
+ 530              		.cfi_offset 14, -4
+ 117:Core/Src/stepper.c ****     stop_movement();
+ 531              		.loc 1 117 5 view .LVU133
+ 532 0002 FFF7FEFF 		bl	stop_movement
+ 533              	.LVL30:
+ 118:Core/Src/stepper.c ****     position = 0;
+ 534              		.loc 1 118 5 view .LVU134
+ 535              		.loc 1 118 14 is_stmt 0 view .LVU135
+ 536 0006 024B     		ldr	r3, .L45
+ 537 0008 0022     		movs	r2, #0
+ 538 000a 1A60     		str	r2, [r3]
+ 119:Core/Src/stepper.c **** }
+ 539              		.loc 1 119 1 view .LVU136
+ 540 000c 08BD     		pop	{r3, pc}
+ 541              	.L46:
+ 542 000e 00BF     		.align	2
+ 543              	.L45:
+ 544 0010 00000000 		.word	.LANCHOR0
+ 545              		.cfi_endproc
+ 546              	.LFE71:
+ 548              		.section	.text.is_moving,"ax",%progbits
+ 549              		.align	1
+ 550              		.global	is_moving
+ 551              		.syntax unified
+ 552              		.thumb
+ 553              		.thumb_func
+ 555              	is_moving:
+ 556              	.LFB72:
+ 120:Core/Src/stepper.c **** uint8_t is_moving(void) {
+ARM GAS  /tmp/ccANCvGS.s 			page 13
+
+
+ 557              		.loc 1 120 25 is_stmt 1 view -0
+ 558              		.cfi_startproc
+ 559              		@ args = 0, pretend = 0, frame = 0
+ 560              		@ frame_needed = 0, uses_anonymous_args = 0
+ 561              		@ link register save eliminated.
+ 121:Core/Src/stepper.c ****     return moving;
+ 562              		.loc 1 121 5 view .LVU138
+ 122:Core/Src/stepper.c **** }
+ 563              		.loc 1 122 1 is_stmt 0 view .LVU139
+ 564 0000 014B     		ldr	r3, .L48
+ 565 0002 1878     		ldrb	r0, [r3]	@ zero_extendqisi2
+ 566 0004 7047     		bx	lr
+ 567              	.L49:
+ 568 0006 00BF     		.align	2
+ 569              	.L48:
+ 570 0008 00000000 		.word	.LANCHOR1
+ 571              		.cfi_endproc
+ 572              	.LFE72:
+ 574              		.global	direction
+ 575              		.global	moving
+ 576              		.global	pos_target
+ 577              		.global	last_update_tick
+ 578              		.global	position
+ 579              		.global	speed
+ 580              		.section	.bss.direction,"aw",%nobits
+ 581              		.set	.LANCHOR3,. + 0
+ 584              	direction:
+ 585 0000 00       		.space	1
+ 586              		.section	.bss.last_update_tick,"aw",%nobits
+ 587              		.align	2
+ 588              		.set	.LANCHOR4,. + 0
+ 591              	last_update_tick:
+ 592 0000 00000000 		.space	4
+ 593              		.section	.bss.moving,"aw",%nobits
+ 594              		.set	.LANCHOR1,. + 0
+ 597              	moving:
+ 598 0000 00       		.space	1
+ 599              		.section	.bss.pos_target,"aw",%nobits
+ 600              		.align	2
+ 601              		.set	.LANCHOR5,. + 0
+ 604              	pos_target:
+ 605 0000 00000000 		.space	4
+ 606              		.section	.bss.position,"aw",%nobits
+ 607              		.align	2
+ 608              		.set	.LANCHOR0,. + 0
+ 611              	position:
+ 612 0000 00000000 		.space	4
+ 613              		.section	.bss.speed,"aw",%nobits
+ 614              		.align	2
+ 615              		.set	.LANCHOR2,. + 0
+ 618              	speed:
+ 619 0000 00000000 		.space	4
+ 620              		.text
+ 621              	.Letext0:
+ 622              		.file 2 "/home/jack/.config/Code - OSS/User/globalStorage/bmd.stm32-for-vscode/@xpack-dev-tools/ar
+ 623              		.file 3 "/home/jack/.config/Code - OSS/User/globalStorage/bmd.stm32-for-vscode/@xpack-dev-tools/ar
+ 624              		.file 4 "Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h"
+ARM GAS  /tmp/ccANCvGS.s 			page 14
+
+
+ 625              		.file 5 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_def.h"
+ 626              		.file 6 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_gpio.h"
+ 627              		.file 7 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_dma.h"
+ 628              		.file 8 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h"
+ 629              		.file 9 "Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h"
+ARM GAS  /tmp/ccANCvGS.s 			page 15
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 stepper.c
+     /tmp/ccANCvGS.s:18     .text.get_pos:0000000000000000 $t
+     /tmp/ccANCvGS.s:24     .text.get_pos:0000000000000000 get_pos
+     /tmp/ccANCvGS.s:41     .text.get_pos:0000000000000008 $d
+     /tmp/ccANCvGS.s:46     .text.stop_movement:0000000000000000 $t
+     /tmp/ccANCvGS.s:52     .text.stop_movement:0000000000000000 stop_movement
+     /tmp/ccANCvGS.s:77     .text.stop_movement:0000000000000014 $d
+     /tmp/ccANCvGS.s:83     .text.set_arr:0000000000000000 $t
+     /tmp/ccANCvGS.s:89     .text.set_arr:0000000000000000 set_arr
+     /tmp/ccANCvGS.s:118    .text.set_arr:0000000000000018 $d
+     /tmp/ccANCvGS.s:124    .text.start_movement:0000000000000000 $t
+     /tmp/ccANCvGS.s:130    .text.start_movement:0000000000000000 start_movement
+     /tmp/ccANCvGS.s:191    .text.start_movement:0000000000000048 $d
+     /tmp/ccANCvGS.s:200    .text.stepper_pulse_finished:0000000000000000 $t
+     /tmp/ccANCvGS.s:206    .text.stepper_pulse_finished:0000000000000000 stepper_pulse_finished
+     /tmp/ccANCvGS.s:371    .text.stepper_pulse_finished:00000000000000a8 $d
+     /tmp/ccANCvGS.s:381    .text.move_to:0000000000000000 $t
+     /tmp/ccANCvGS.s:387    .text.move_to:0000000000000000 move_to
+     /tmp/ccANCvGS.s:507    .text.move_to:0000000000000070 $d
+     /tmp/ccANCvGS.s:515    .text.zero:0000000000000000 $t
+     /tmp/ccANCvGS.s:521    .text.zero:0000000000000000 zero
+     /tmp/ccANCvGS.s:544    .text.zero:0000000000000010 $d
+     /tmp/ccANCvGS.s:549    .text.is_moving:0000000000000000 $t
+     /tmp/ccANCvGS.s:555    .text.is_moving:0000000000000000 is_moving
+     /tmp/ccANCvGS.s:570    .text.is_moving:0000000000000008 $d
+     /tmp/ccANCvGS.s:584    .bss.direction:0000000000000000 direction
+     /tmp/ccANCvGS.s:597    .bss.moving:0000000000000000 moving
+     /tmp/ccANCvGS.s:604    .bss.pos_target:0000000000000000 pos_target
+     /tmp/ccANCvGS.s:591    .bss.last_update_tick:0000000000000000 last_update_tick
+     /tmp/ccANCvGS.s:611    .bss.position:0000000000000000 position
+     /tmp/ccANCvGS.s:618    .bss.speed:0000000000000000 speed
+     /tmp/ccANCvGS.s:585    .bss.direction:0000000000000000 $d
+     /tmp/ccANCvGS.s:587    .bss.last_update_tick:0000000000000000 $d
+     /tmp/ccANCvGS.s:598    .bss.moving:0000000000000000 $d
+     /tmp/ccANCvGS.s:600    .bss.pos_target:0000000000000000 $d
+     /tmp/ccANCvGS.s:607    .bss.position:0000000000000000 $d
+     /tmp/ccANCvGS.s:614    .bss.speed:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+HAL_TIM_PWM_Stop_IT
+htim1
+HAL_GPIO_WritePin
+HAL_GetTick
+HAL_TIM_PWM_Start_IT
