@@ -23,6 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include "hx711.h"
 #include "stepper.h"
+
+#include "can-ids/CAN.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +52,7 @@ TIM_HandleTypeDef htim3;
 hx711_t load_cell;
 uint8_t ready = 0;
 
-extern uint32_t rpm;
+uint8_t load_ctrl_ready = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,6 +68,12 @@ static void MX_TIM3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+
+volatile float current_rpm = 8000;
+volatile float target_rpm = DEFAULT_TARGET;
+
+float weight;
 
 // CAN Interrupt handler. Called whenever a new CAN frame is received.
 void can_irq(CAN_HandleTypeDef *pcan) {
@@ -88,7 +96,9 @@ void can_irq(CAN_HandleTypeDef *pcan) {
       // case 0xB0:
       //   __NVIC_SystemReset(); // Reset to bootloader
       //   break;
-      
+      case ECU_1_ID:
+        current_rpm = read_field_scaled_float(&ECU_1_rpm, data);
+        break;
       default:
         // Default behavior for unrecognized CAN IDs. Probably just ignore.
         break;
@@ -141,6 +151,10 @@ int main(void)
   move_to(-20000);
   while(is_moving());
   zero();
+  HAL_Delay(500);
+
+  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
+  load_ctrl_ready = 1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -148,19 +162,42 @@ int main(void)
   while (1)
   {
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_GPIO_TogglePin(STABLE_LED_GPIO_Port, STABLE_LED_Pin);
-    
-    
-    float weight = hx711_weight(&load_cell);
-    rpm = (uint32_t) (weight);
-
-    if(HAL_GetTick() % 8000 < 4000) {
-      if(!is_moving())
-        move_to(0);
+    if(current_rpm - target_rpm < RPM_STABLE_THRESH && current_rpm - target_rpm > -RPM_STABLE_THRESH){
+      HAL_GPIO_WritePin(STABLE_LED_GPIO_Port, STABLE_LED_Pin, 1);
     } else {
-      if(!is_moving())
-        move_to(12000);
+      HAL_GPIO_WritePin(STABLE_LED_GPIO_Port, STABLE_LED_Pin, 0);
     }
+    
+    // Read weight (blocking)    
+    weight = hx711_weight(&load_cell);
+
+    // Send CAN message with dyno data
+    // Message header
+    CAN_TxHeaderTypeDef m;
+    // Use standard ID
+    m.IDE = CAN_ID_STD;
+    // Set message ID
+    m.StdId = DYNO_CONTROLLER_ID;
+    // Use CAN_RTR_DATA to transmit data
+    // We may use CAN_RTR_REMOTE to request things to send data in the future
+    m.RTR = CAN_RTR_DATA;
+    // Amount of data
+    m.DLC = DYNO_CONTROLLER_DLC;
+    // Data to send
+    uint16_t dyno_data[4];
+
+  
+    dyno_data[0] = __REV16((uint16_t)current_rpm);
+    dyno_data[1] = __REV16((uint16_t)target_rpm);
+    dyno_data[2] = __REV16((uint16_t) weight);
+    dyno_data[3] = __REV16((uint16_t) get_pos());
+
+    // Send a message
+    uint32_t mailbox;
+    HAL_CAN_AddTxMessage(&hcan, &m, dyno_data, &mailbox);
+
+    // Wait for message to be sent
+    while (HAL_CAN_IsTxMessagePending(&hcan, mailbox));
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -422,11 +459,11 @@ static void MX_TIM3_Init(void)
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 10;
+  sConfig.IC1Filter = 15;
   sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 10;
+  sConfig.IC2Filter = 15;
   if (HAL_TIM_Encoder_Init(&htim3, &sConfig) != HAL_OK)
   {
     Error_Handler();

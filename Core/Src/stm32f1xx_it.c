@@ -44,7 +44,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-uint32_t rpm = 0;
+
+uint16_t last_encoder_count = 0;
+
+uint32_t last_adj_tick = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,6 +65,10 @@ extern CAN_HandleTypeDef hcan;
 extern TIM_HandleTypeDef htim1;
 /* USER CODE BEGIN EV */
 extern hx711_t load_cell;
+
+
+float integrator = 0.5;
+
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -187,9 +194,59 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-  // rpm++;
-  seg_set_value(rpm / 10);
-  seg_update();
+  // Read encoder and update setpoint
+
+  uint16_t new_encoder = TIM3->CNT;
+
+  int16_t encoder_diff = (new_encoder / 4) - (last_encoder_count / 4);
+
+  last_encoder_count = new_encoder;
+
+  if(encoder_diff < -10 || encoder_diff > 10) encoder_diff = 0;
+  
+  if(encoder_diff != 0) {
+    last_adj_tick = HAL_GetTick();
+  }
+
+  target_rpm += encoder_diff * 100;
+  if(target_rpm < MIN_TARGET) target_rpm = MIN_TARGET;
+  if(target_rpm > MAX_TARGET_RPM) target_rpm = MAX_TARGET_RPM;
+
+
+  // PID control
+  if(load_ctrl_ready) {
+    float rpm_error = target_rpm - current_rpm;
+
+    float p_output = rpm_error * KP;
+
+    integrator += rpm_error * KI * 0.001;
+
+    float integrator_max = 1.0 - p_output;
+    float integrator_min = -p_output;
+
+    if(integrator < integrator_min) integrator = integrator_min;
+    if(integrator > integrator_max) integrator = integrator_max;
+
+    uint32_t target_pos = (uint32_t) ((integrator + p_output) * (float)(MAX_POSITION));
+
+    if(target_rpm <= 0) {
+      move_to(0);
+    } else {
+      move_to((int32_t) target_rpm);
+    }
+    // move_to((int32_t)target_rpm);
+    
+    // show target pos
+    if(HAL_GetTick() - last_adj_tick < 1000){
+      seg_set_value((uint32_t) (target_rpm / 10));
+    } else {
+      seg_set_value((uint32_t) (target_pos / 10));
+    }
+    seg_update();
+  } else {
+    seg_set_value(6969);
+    seg_update();
+  }
 
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();

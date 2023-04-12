@@ -87,6 +87,9 @@ void move_to(int32_t target){
             new_dir = FWD;
         } else if(pos_target < position){
             new_dir = REV;
+        } else {
+            stop_movement();
+            return;
         }
 
         pos_target = target;

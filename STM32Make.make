@@ -36,6 +36,8 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+Core/Src/can-ids/CAN.c \
+Core/Src/can-ids/CAN_IDS.c \
 Core/Src/hx711.c \
 Core/Src/main.c \
 Core/Src/segment.c \
@@ -129,6 +131,7 @@ AS_INCLUDES = \
 # C includes
 C_INCLUDES =  \
 -ICore/Inc \
+-ICore/Src/can-ids \
 -IDrivers/CMSIS/Device/ST/STM32F1xx/Include \
 -IDrivers/CMSIS/Include \
 -IDrivers/STM32F1xx_HAL_Driver/Inc \

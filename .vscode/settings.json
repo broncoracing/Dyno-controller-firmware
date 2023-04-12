@@ -3,6 +3,7 @@
     "cortex-debug.openocdPath": "/home/jack/.config/Code - OSS/User/globalStorage/bmd.stm32-for-vscode/@xpack-dev-tools/openocd/0.12.0-1.1/.content/bin/openocd",
     "files.associations": {
         "segment.h": "c",
-        "hx711.h": "c"
+        "hx711.h": "c",
+        "*.inc": "c"
     }
 }

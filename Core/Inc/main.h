@@ -99,12 +99,20 @@ void Error_Handler(void);
 #define DIG_3_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-extern uint8_t ready;
-extern uint32_t current_rpm;
-extern uint32_t target_rpm;
+extern uint8_t load_ctrl_ready;
+extern volatile float current_rpm;
+extern volatile float target_rpm;
 
-#define KP 1.0f
-#define KI 0.0f
+extern float weight;
+
+#define MAX_TARGET_RPM 12000
+#define MIN_TARGET 0
+#define DEFAULT_TARGET 0
+
+#define KP 0.0000f
+#define KI 0.001f
+
+#define RPM_STABLE_THRESH 100
 
 /* USER CODE END Private defines */
 
